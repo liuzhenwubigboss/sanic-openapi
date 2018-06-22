@@ -24,6 +24,8 @@ class Field:
 
 class JsonBody(Field):
     def __init__(self, fields=None, **kwargs):
+        if isinstance(fields, type):
+            fields = vars(fields)
         self.fields = fields or {}
         super().__init__(**kwargs, name="body")
 

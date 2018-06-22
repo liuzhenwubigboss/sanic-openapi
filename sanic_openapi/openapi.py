@@ -67,7 +67,7 @@ def build_spec(app, loop):
                         route_spec.tags.append(blueprint.name)
 
     paths = OrderedDict()
-    for uri in sorted(app.router.routes_all.keys(), key=lambda x: (app.router.routes_all[x].name.split('.')[1].lower(), x)):
+    for uri in sorted(app.router.routes_all.keys()):
         route = app.router.routes_all[uri]
         if uri.startswith("/swagger") or uri.startswith("/openapi") \
                 or '<file_uri' in uri:
@@ -187,4 +187,4 @@ def build_spec(app, loop):
 
 @blueprint.route('/spec.json')
 def spec(request):
-    return json_res(_spec, dumps=json.dumps)
+    return json_res(_spec, dumps=json.dumps, default=serialize_schema)

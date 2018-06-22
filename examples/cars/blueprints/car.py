@@ -26,8 +26,7 @@ def car_get(request, car_id):
 
 @blueprint.put("/<car_id:int>", strict_slashes=True)
 @doc.summary("Updates a car")
-@doc.consumes(Car, location='body')
-@doc.consumes({'AUTHORIZATION': str}, location='header')
+@doc.consumes(doc.JsonBody(Car), location='body')
 @doc.produces(Car)
 def car_put(request, car_id):
     return json(test_car)

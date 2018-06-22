@@ -27,7 +27,7 @@ async def get_cars(request):
 
 @blueprint.put("/car", strict_slashes=True)
 @doc.summary("Adds a car to the garage")
-@doc.consumes(Car)
+@doc.consumes(doc.JsonBody(Car), location='body')
 @doc.produces(Status)
 async def add_car(request):
     return json(test_success)

@@ -25,7 +25,7 @@ def driver_get(request, driver_id):
 
 @blueprint.put("/<driver_id:int>", strict_slashes=True)
 @doc.summary("Updates a driver")
-@doc.consumes(Driver)
+@doc.consumes(doc.JsonBody(Driver))
 @doc.produces(Driver)
 def driver_put(request, driver_id):
     return json(test_driver)
