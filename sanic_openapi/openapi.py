@@ -1,9 +1,12 @@
 import re
+import json
+from collections import OrderedDict
 from itertools import repeat
 
 from sanic.blueprints import Blueprint
-from sanic.response import json
+from sanic.response import json as json_res
 from sanic.views import CompositionView
+from sanic.constants import HTTP_METHODS
 
 from .doc import route_specs, RouteSpec, serialize_schema, definitions
 
@@ -47,13 +50,25 @@ def build_spec(app, loop):
     for blueprint in app.blueprints.values():
         if hasattr(blueprint, 'routes'):
             for route in blueprint.routes:
-                route_spec = route_specs[route.handler]
-                route_spec.blueprint = blueprint
-                if not route_spec.tags:
-                    route_spec.tags.append(blueprint.name)
+                if hasattr(route.handler, 'view_class'):
+                    # class based view
+                    view = route.handler.view_class
+                    for http_method in HTTP_METHODS:
+                        _handler = getattr(view, http_method.lower(), None)
+                        if _handler:
+                            route_spec = route_specs[_handler]
+                            route_spec.blueprint = blueprint
+                            if not route_spec.tags:
+                                route_spec.tags.append(blueprint.name)
+                else:
+                    route_spec = route_specs[route.handler]
+                    route_spec.blueprint = blueprint
+                    if not route_spec.tags:
+                        route_spec.tags.append(blueprint.name)
 
-    paths = {}
-    for uri, route in app.router.routes_all.items():
+    paths = OrderedDict()
+    for uri in sorted(app.router.routes_all.keys(), key=lambda x: (app.router.routes_all[x].name.split('.')[1].lower(), x)):
+        route = app.router.routes_all[uri]
         if uri.startswith("/swagger") or uri.startswith("/openapi") \
                 or '<file_uri' in uri:
                 # TODO: add static flag in sanic routes
@@ -69,11 +84,16 @@ def build_spec(app, loop):
             view = route.handler
             method_handlers = view.handlers.items()
         else:
-            method_handlers = zip(route.methods, repeat(route.handler))
+            method_handlers = zip(sorted(list(route.methods), key=lambda x: HTTP_METHODS.index(x)),
+                                  repeat(route.handler))
 
-        methods = {}
+        methods = OrderedDict()
         for _method, _handler in method_handlers:
-            route_spec = route_specs.get(_handler) or RouteSpec()
+            if hasattr(_handler, 'view_class'):
+                view_handler = getattr(_handler.view_class, _method.lower())
+                route_spec = route_specs.get(view_handler) or RouteSpec()
+            else:
+                route_spec = route_specs.get(_handler) or RouteSpec()
 
             if _method == 'OPTIONS' or route_spec.exclude:
                 continue
@@ -160,11 +180,11 @@ def build_spec(app, loop):
             continue
         for tag in route_spec.tags:
             tags[tag] = True
-    _spec['tags'] = [{"name": name} for name in tags.keys()]
+    _spec['tags'] = [{"name": name} for name in sorted(tags.keys())]
 
     _spec['paths'] = paths
 
 
 @blueprint.route('/spec.json')
 def spec(request):
-    return json(_spec)
+    return json_res(_spec, dumps=json.dumps)
