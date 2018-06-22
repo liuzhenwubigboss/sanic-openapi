@@ -282,13 +282,16 @@ def description(text):
     return inner
 
 
-def consumes(*args, content_type=None, location='query', required=False):
+def consumes(*args, content_type=None, location='query', required=False, auth=True):
     def inner(func):
         if args:
             for arg in args:
                 field = RouteField(arg, location, required)
                 route_specs[func].consumes.append(field)
                 route_specs[func].consumes_content_type = content_type
+        if auth:
+            field = RouteField({'Authorization': String('Authorization')}, location='header', required=True)
+            route_specs[func].consumes.insert(0, field)
         return func
     return inner
 
