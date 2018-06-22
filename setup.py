@@ -16,9 +16,9 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
         raise RuntimeError('Unable to determine version.')
 
 setup(
-    name='sanic-openapi-sorted',
+    name='sanic-sorted-openapi',
     version=version,
-    url='http://github.com/channelcat/sanic/',
+    url='https://github.com/liuzhenwubigboss/sanic-openapi',
     license='MIT',
     author='liuzhenwu',
     author_email='liuzhenwu8264@gmail.com',
